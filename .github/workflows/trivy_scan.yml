@@ -47,10 +47,10 @@ jobs:
 
       - name: Commit scan results to repository
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name "EduardoVasconceloss"
+          git config --global user.email "carlos.vasconcelos@ufba.br"
           git add "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
           git commit -m "Add Trivy scan results (${DATE})"
           git push origin HEAD:main
