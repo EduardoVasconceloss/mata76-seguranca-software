@@ -53,6 +53,6 @@ jobs:
           git config --global user.email "carlos.vasconcelos@ufba.br"
           git add "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
           git commit -m "Add Trivy scan results (${DATE})"
-        # Atualiza a URL remota utilizando a variável MY_GITHUB_TOKEN
+          # Atualiza a URL remota utilizando a variável MY_GITHUB_TOKEN
           git remote set-url origin https://EduardoVasconceloss:${MY_GITHUB_TOKEN}@github.com/EduardoVasconceloss/mata76-seguranca-software.git
           git push origin HEAD:main
