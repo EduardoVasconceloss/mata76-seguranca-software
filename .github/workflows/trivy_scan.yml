@@ -24,10 +24,10 @@ jobs:
       - name: Create output directory
         run: mkdir -p "GitHub Actions/Trivy Automation"
 
-      - name: Install Trivy
+      - name: Install Trivy and jq
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl
+          sudo apt-get install -y curl jq
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.57.0
 
       - name: Log in to GitHub Container Registry
@@ -40,17 +40,27 @@ jobs:
         run: |
           OUTPUT_FILE="GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
           mkdir -p "GitHub Actions/Trivy Automation"
-          trivy image --format json --ignore-unfixed --vuln-type os,library --severity CRITICAL,HIGH,MEDIUM,LOW -o "$OUTPUT_FILE" nginx:latest
+          # Removemos a opção --ignore-unfixed para exibir todas as vulnerabilidades
+          trivy image --format json --vuln-type os,library --severity CRITICAL,HIGH,MEDIUM,LOW -o "$OUTPUT_FILE" nginx:latest
+          echo "Trivy scan complete. Results saved to $OUTPUT_FILE."
+          echo "Full scan results:"
+          cat "$OUTPUT_FILE"
+          if grep -q '"Severity": "HIGH"' "$OUTPUT_FILE"; then
+            echo "High severity vulnerabilities found."
+          else
+            echo "No high severity vulnerabilities found."
+          fi
 
-      - name: Verify scan results exist
-        run: ls -l "GitHub Actions/Trivy Automation/"
-
-      - name: Commit scan results to repository
+      - name: Commit scan results if high vulnerabilities exist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
-          git commit -m "Add Trivy scan results (${DATE})"
-          git push origin HEAD:main
+          if grep -q '"Severity": "HIGH"' "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"; then
+            git config --global user.name "GitHub Actions"
+            git config --global user.email "actions@github.com"
+            git add "GitHub Actions/Trivy Automation/scan-results-${DATE}.json"
+            git commit -m "Add Trivy scan results (${DATE}) - High severity vulnerabilities found"
+            git push origin HEAD:main
+          else
+            echo "No high severity vulnerabilities found. Not committing scan results."
+          fi
